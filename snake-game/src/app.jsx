@@ -4,6 +4,8 @@ const COLS = 24;          // 列数
 const ROWS = 24;         // 行数
 const CELL = 20;         // 每格像素
 const TICK_MS = 110;     // 游戏帧间隔（毫秒）
+const HISTORY_LIMIT = 20; // 记录条数上限
+const STORAGE_KEY = 'snake-history'; // localStorage 键名
 
 const DIR = {
   up: { x: 0, y: -1 },
@@ -36,6 +38,17 @@ function initialSnake() {
   ];
 }
 
+// 读取本地历史（容错）
+function loadHistory() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    const arr = raw ? JSON.parse(raw) : [];
+    return Array.isArray(arr) ? arr : [];
+  } catch {
+    return [];
+  }
+}
+
 export default function App() {
   const [snake, setSnake] = useState(initialSnake);
   const [food, setFood] = useState(() => randFood(initialSnake()));
@@ -44,25 +57,57 @@ export default function App() {
   const [status, setStatus] = useState('ready'); // ready | playing | paused | over | win
   const [grid, setGrid] = useState({ cols: COLS, rows: ROWS });
 
+  // 得分记录：[{ score, time(ISO 字符串) }]，最新在前
+  const [history, setHistory] = useState(loadHistory);
+
   // 用 ref 保存最新值，供定时器 / 键盘回调读取，避免闭包陷阱
   const snakeRef = useRef(snake);
   const foodRef = useRef(food);
   const dirRef = useRef('right');          // 当前真实方向
   const pendingDirRef = useRef('right');   // 本次按键期望转向（一帧最多转一次）
   const statusRef = useRef(status);
+  const scoreRef = useRef(0);
+  const recordedRef = useRef(false);      // 本局是否已记录，防止重复记
 
   snakeRef.current = snake;
   foodRef.current = food;
   statusRef.current = status;
+  scoreRef.current = score;
 
   const startGame = useCallback(() => {
     const s = initialSnake();
     dirRef.current = 'right';
     pendingDirRef.current = 'right';
+    recordedRef.current = false;
     setSnake(s);
     setFood(randFood(s));
     setScore(0);
     setStatus('playing');
+  }, []);
+
+  // 把历史写回 localStorage（随 history 变化自动持久化）
+  useEffect(() => {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(history));
+    } catch {
+      /* 忽略隐私模式等写失败场景 */
+    }
+  }, [history]);
+
+  // 一局结束（撞墙）时记录本次得分
+  useEffect(() => {
+    if (status === 'over' && !recordedRef.current) {
+      recordedRef.current = true;
+      setHistory((h) => [
+        { score: scoreRef.current, time: new Date().toLocaleString() },
+        ...h,
+      ].slice(0, HISTORY_LIMIT));
+    }
+    if (status === 'playing') recordedRef.current = false;
+  }, [status]);
+
+  const clearHistory = useCallback(() => {
+    setHistory([]);
   }, []);
 
   // 键盘控制
@@ -151,6 +196,7 @@ export default function App() {
       <div className="hud">
         <div>得分 <b>{score}</b></div>
         <div>最高 <b>{best}</b></div>
+        <div>本局次数 <b>{history.length}</b></div>
       </div>
 
       <div
@@ -191,6 +237,31 @@ export default function App() {
 
       <div className="tips">
         <span>↑↓←→ / WASD 控制方向，空格暂停，回车开始</span>
+      </div>
+
+      {/* 得分记录 */}
+      <div className="records">
+        <div className="records-head">
+          <h2>得分记录</h2>
+          {history.length > 0 && (
+            <button className="btn ghost small" onClick={clearHistory}>
+              清空
+            </button>
+          )}
+        </div>
+        {history.length === 0 ? (
+          <div className="records-empty">暂无记录，结束一局会自动保存到这里。</div>
+        ) : (
+          <ol className="records-list">
+            {history.map((r, i) => (
+              <li key={`${r.time}-${i}`}>
+                <span className="record-score">第 {history.length - i} 局</span>
+                <span className="record-val">{r.score} 分</span>
+                <span className="record-time">{r.time}</span>
+              </li>
+            ))}
+          </ol>
+        )}
       </div>
     </div>
   );

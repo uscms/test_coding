@@ -130,3 +130,84 @@ h1 {
   font-size: 13px;
   color: #64748b;
 }
+
+
+/* 让整页内容顶部对齐，记录区变高时不被 flex 居中裁掉 */
+body {
+  align-items: flex-start;
+  overflow-y: auto;
+}
+
+#root {
+  align-items: flex-start;
+  padding: 24px 0;
+}
+
+.records {
+  width: 100%;
+  max-width: 600px;
+  margin-top: 8px;
+  background: #1e293b;
+  border: 2px solid #334155;
+  border-radius: 8px;
+  padding: 16px 18px;
+}
+
+.records-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.records-head h2 {
+  margin: 0;
+  font-size: 16px;
+  color: #cbd5e1;
+}
+
+.records-empty {
+  font-size: 14px;
+  color: #64748b;
+}
+
+.records-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.records-list li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+  background: #0f172a;
+  border-radius: 6px;
+  padding: 8px 12px;
+}
+
+.record-score {
+  color: #94a3b8;
+  min-width: 70px;
+}
+
+.record-val {
+  color: #34d399;
+  font-weight: 700;
+  min-width: 60px;
+}
+
+.record-time {
+  color: #64748b;
+  font-size: 12px;
+  margin-left: auto;
+}
+
+.btn.small {
+  padding: 4px 12px;
+  font-size: 13px;
+}
