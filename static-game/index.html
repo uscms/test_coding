@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>记忆翻牌（纯静态，双击即玩）</title>
+<style>
+  body{margin:0;min-height:100vh;display:flex;flex-direction:column;align-items:center;
+       justify-content:center;background:#fafafa;font-family:'Microsoft YaHei',sans-serif}
+  h1{font-size:20px;font-weight:500;color:#333}
+  .board{display:grid;grid-template-columns:repeat(4,90px);gap:12px}
+  .card{width:90px;height:90px;background:#d5347a;color:#fff;border:0;border-radius:10px;
+        font-size:30px;cursor:pointer;display:flex;align-items:center;justify-content:center;
+        transition:background .2s}
+  .card.open{background:#fff;color:#333;border:1px solid #ddd}
+  .card.done{background:#e8f5ee;color:#0f6e56;cursor:default}
+  .bar{margin-top:18px;color:#666;font-size:14px}
+  button{margin-top:10px;padding:8px 18px;border:0;border-radius:8px;background:#333;
+         color:#fff;cursor:pointer}
+</style>
+</head>
+<body>
+  <h1>记忆翻牌</h1>
+  <div class="board" id="board"></div>
+  <div class="bar">步数：<span id="steps">0</span>　配对：<span id="pairs">0</span> / 8</div>
+  <button onclick="init()">重新开始</button>
+<script>
+const ICONS = ['🍎','🍇','🍑','🍓','🥑','🍒','🍍','🥝'];
+let first = null, lock = false, steps = 0, pairs = 0;
+function init() {
+  const board = document.getElementById('board');
+  board.innerHTML = '';
+  first = null; lock = false; steps = 0; pairs = 0;
+  document.getElementById('steps').textContent = '0';
+  document.getElementById('pairs').textContent = '0';
+  const deck = [...ICONS, ...ICONS].sort(() => Math.random() - 0.5);
+  deck.forEach((icon) => {
+    const b = document.createElement('button');
+    b.className = 'card';
+    b.dataset.icon = icon;
+    b.textContent = '';
+    b.onclick = () => flip(b);
+    board.appendChild(b);
+  });
+}
+function flip(card) {
+  if (lock || card.classList.contains('open') || card.classList.contains('done')) return;
+  card.classList.add('open');
+  card.textContent = card.dataset.icon;
+  if (!first) { first = card; return; }
+  steps++;
+  document.getElementById('steps').textContent = steps;
+  if (first.dataset.icon === card.dataset.icon) {
+    first.classList.add('done'); card.classList.add('done');
+    first = null; pairs++;
+    document.getElementById('pairs').textContent = pairs;
+    if (pairs === 8) setTimeout(() => alert('全部配对完成，共 ' + steps + ' 步！'), 200);
+  } else {
+    lock = true;
+    const a = first;
+    setTimeout(() => {
+      a.classList.remove('open'); a.textContent = '';
+      card.classList.remove('open'); card.textContent = '';
+      first = null; lock = false;
+    }, 700);
+  }
+}
+init();
+</script>
+</body>
+</html>
