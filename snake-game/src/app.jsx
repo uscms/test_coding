@@ -90,7 +90,7 @@ export default function App() {
   const pendingDirRef = useRef('right');   // 本次按键期望转向（一帧最多转一次）
   const statusRef = useRef(status);
   const scoreRef = useRef(0);
-  const recordedRef = useRef(false);      // 本局是否已记录，防止重复记
+  const recordedRef = useRef(false);       // 本局是否已记录，防止重复记
 
   snakeRef.current = snake;
   foodRef.current = food;
@@ -133,9 +133,9 @@ export default function App() {
     }
   }, [theme]);
 
-  // 一局结束（撞墙）时记录本次得分
+  // 一局结束（撞墙 / 撞自己 / 赢）时记录本次得分
   useEffect(() => {
-    if (status === 'over' && !recordedRef.current) {
+    if ((status === 'over' || status === 'win') && !recordedRef.current) {
       recordedRef.current = true;
       setHistory((h) => [
         { score: scoreRef.current, time: new Date().toLocaleString() },
@@ -195,26 +195,39 @@ export default function App() {
         setStatus('over');
         return;
       }
-      // 撞自己（即将进入的尾格若会被移走则不算，简化处理：整条都算障碍）
-      const body = s;
-      if (body.some((p, i) => i < body.length - 1 && p.x === nx && p.y === ny)) {
+
+      // 本帧是否吃到食物
+      const ate = !!(foodRef.current && nx === foodRef.current.x && ny === foodRef.current.y);
+
+      // 撞自己：若本帧增长（吃到），尾格不移动，整条都算障碍；
+      // 若本帧不增长，尾格即将移走，最后一格不算障碍
+      const limit = ate ? s.length : s.length - 1;
+      if (s.some((p, i) => i < limit && p.x === nx && p.y === ny)) {
         setStatus('over');
         return;
       }
 
-      const ate = foodRef.current && nx === foodRef.current.x && ny === foodRef.current.y;
       const newSnake = [ { x: nx, y: ny }, ...s ];
       if (ate) {
+        // 吃到食物：本帧不 pop 尾部 → 蛇变长 1 格
         setScore((sc) => {
           const ns = sc + 1;
           setBest((b) => Math.max(b, ns));
           return ns;
         });
-        setFood(randFood(newSnake)); // 蛇不变长，食物更新
+        const nextFood = randFood(newSnake);
+        if (!nextFood) {
+          // 蛇占满整个棋盘，胜利
+          setSnake(newSnake);
+          setFood(null);
+          setStatus('win');
+          return;
+        }
+        setFood(nextFood);
       } else {
-        newSnake.pop(); // 没吃到，移动
-        setSnake(newSnake);
+        newSnake.pop(); // 没吃到：尾部前移
       }
+      setSnake(newSnake);
     }, TICK_MS);
     return () => clearInterval(timer);
   }, [status]);
@@ -246,6 +259,7 @@ export default function App() {
       <div className="hud">
         <div>得分 <b>{score}</b></div>
         <div>最高 <b>{best}</b></div>
+        <div>长度 <b>{snake.length}</b></div>
         <div>本局次数 <b>{history.length}</b></div>
       </div>
 
@@ -269,7 +283,8 @@ export default function App() {
         {status !== 'playing' && (
           <div className="overlay">
             <div className="overlay-text">
-              {status === 'over' && <>撞墙啦，得分 {score}</>}
+              {status === 'over' && <>游戏结束，得分 {score}</>}
+              {status === 'win' && <>🎉 太厉害了，占满整盘！得分 {score}</>}
               {status === 'paused' && <>已暂停</>}
               {status === 'ready' && <>按 空格 / 方向键 开始</>}
             </div>
