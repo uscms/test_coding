@@ -1,0 +1,23 @@
+# 依赖
+node_modules/
+
+# 构建产物
+dist/
+build/
+
+# 缓存与日志
+.npm-cache/
+.npm-global/
+*.log
+.DS_Store
+
+# Python
+__pycache__/
+*.pyc
+
+# 备份
+*.bak
+*.bak.*
+
+# 本地数据
+todo.json
