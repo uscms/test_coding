@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>工作汇报 · 国风</title>
+<style>
+  /* ========== 国风设计变量 ========== */
+  :root {
+    --paper: #f6f1e5;          /* 宣纸底 */
+    --paper-dark: #efe7d3;
+    --ink: #2b2b2b;            /* 墨色 */
+    --ink-light: #6b655a;
+    --seal: #9e2b25;          /* 印章红 */
+    --seal-dark: #7a1f1b;
+    --gold: #b3893a;          /* 描金 */
+    --line: rgba(43, 43, 43, .18);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html, body {
+    height: 100%;
+    overflow: hidden;
+    background: #d8d2c2;
+    font-family: "Noto Serif SC", "Source Han Serif SC", "STKaiti", "KaiTi", "SimSun", serif;
+    color: var(--ink);
+  }
+
+  /* ========== 幻灯片容器 ========== */
+  #deck {
+    position: relative;
+    width: 100vw;
+    height: 100vh;
+  }
+
+  .slide {
+    position: absolute;
+    inset: 0;
+    display: none;
+    background:
+      radial-gradient(ellipse at 20% 0%, rgba(255,255,255,.55), transparent 55%),
+      radial-gradient(ellipse at 80% 100%, rgba(179,137,58,.10), transparent 50%),
+      var(--paper);
+    padding: 6vh 7vw;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  .slide.active {
+    display: flex;
+    animation: fadein .45s ease both;
+  }
+  @keyframes fadein {
+    from { opacity: 0; transform: translateY(14px); }
+    to   { opacity: 1; transform: none; }
+  }
+
+  /* 远景水墨山（纯 CSS/SVG 装饰） */
+  .slide::before {
+    content: "";
+    position: absolute;
+    left: 0; right: 0; bottom: 0;
+    height: 26vh;
+    background:
+      linear-gradient(transparent, rgba(43,43,43,.05)),
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1200 300' preserveAspectRatio='none'%3E%3Cpath d='M0,220 Q150,120 300,200 T600,180 T900,210 T1200,160 V300 H0 Z' fill='%232b2b2b' opacity='0.07'/%3E%3Cpath d='M0,260 Q200,170 420,240 T840,230 T1200,240 V300 H0 Z' fill='%232b2b2b' opacity='0.10'/%3E%3C/svg%3E") bottom / cover no-repeat;
+    pointer-events: none;
+  }
+
+  /* ========== 页眉 ========== */
+  .slide-head {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    margin-bottom: 4vh;
+    position: relative;
+    z-index: 2;
+  }
+  .slide-head .num {
+    width: 56px; height: 56px;
+    border: 2px solid var(--seal);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 24px;
+    color: var(--seal);
+    background: rgba(158,43,37,.05);
+  }
+  .slide-head h2 {
+    font-size: clamp(26px, 3.4vw, 42px);
+    font-weight: 700;
+    letter-spacing: 6px;
+  }
+  .slide-head .tail {
+    flex: 1;
+    height: 1px;
+    background: linear-gradient(to right, var(--seal), transparent);
+    margin-left: 12px;
+  }
+
+  /* ========== 印章 ========== */
+  .seal {
+    position: absolute;
+    top: 5vh; right: 6vw;
+    width: 74px; height: 74px;
+    border: 3px solid var(--seal);
+    color: var(--seal);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px; line-height: 1.35;
+    text-align: center;
+    border-radius: 8px;
+    transform: rotate(4deg);
+    background: rgba(158,43,37,.06);
+    opacity: .9;
+    z-index: 2;
+    box-shadow: inset 0 0 0 1.5px rgba(158,43,37,.25);
+  }
+
+  /* ========== 卡片 ========== */
+  .card {
+    background: var(--paper-dark);
+    border: 1px solid var(--line);
+    border-top: 3px solid var(--seal);
+    border-radius: 6px;
+    padding: 22px 24px;
+    box-shadow: 0 4px 14px rgba(43,43,43,.06);
+  }
+  .card h3 {
+    font-size: 20px;
+    color: var(--seal);
+    letter-spacing: 3px;
+    margin-bottom: 12px;
+  }
+  .card p, .card li {
+    font-size: 16px;
+    line-height: 1.9;
+    color: var(--ink-light);
+  }
+  .card ul { list-style: none; }
+  .card li::before {
+    content: "◈";
+    color: var(--gold);
+    margin-right: 10px;
+    font-size: 12px;
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 22px;
+    flex: 1;
+    align-content: start;
+    z-index: 2;
+  }
+
+  /* ========== 封面 ========== */
+  .cover { align-items: center; justify-content: center; text-align: center; }
+  .cover .frame {
+    border: 2px solid var(--seal);
+    outline: 1px solid rgba(158,43,37,.3);
+    outline-offset: 8px;
+    padding: 60px 90px;
+    background: rgba(246,241,229,.6);
+    position: relative;
+    z-index: 2;
+  }
+  .cover .kicker {
+    font-size: 16px;
+    letter-spacing: 12px;
+    color: var(--gold);
+    margin-bottom: 26px;
+  }
+  .cover h1 {
+    font-size: clamp(44px, 7vw, 88px);
+    letter-spacing: 14px;
+    color: var(--ink);
+    margin-bottom: 26px;
+  }
+  .cover .sub {
+    font-size: 18px;
+    letter-spacing: 6px;
+    color: var(--ink-light);
+  }
+  .cover .seal { top: auto; bottom: 8vh; right: auto; left: 50%; transform: translateX(50%) rotate(4deg); }
+
+  /* ========== 数据条 ========== */
+  .stat { text-align: center; }
+  .stat .val {
+    font-size: clamp(34px, 4.5vw, 56px);
+    color: var(--seal);
+    font-weight: 700;
+  }
+  .stat .val small { font-size: 16px; color: var(--ink-light); font-weight: 400; letter-spacing: 2px; }
+  .stat .label {
+    margin-top: 10px;
+    font-size: 15px;
+    letter-spacing: 4px;
+    color: var(--ink-light);
+  }
+
+  /* ========== 进度条（时间线） ========== */
+  .timeline { position: relative; padding-left: 28px; z-index: 2; }
+  .timeline::before {
+    content: "";
+    position: absolute;
+    left: 7px; top: 8px; bottom: 8px;
+    width: 2px;
+    background: linear-gradient(to bottom, var(--seal), var(--gold));
+  }
+  .timeline .item { position: relative; margin-bottom: 26px; }
+  .timeline .item::before {
+    content: "";
+    position: absolute;
+    left: -27px; top: 8px;
+    width: 12px; height: 12px;
+    border-radius: 50%;
+    background: var(--paper);
+    border: 3px solid var(--seal);
+  }
+  .timeline .item .t { font-size: 15px; color: var(--gold); letter-spacing: 3px; }
+  .timeline .item h4 { font-size: 18px; margin: 4px 0; letter-spacing: 1px; }
+  .timeline .item p { font-size: 14.5px; color: var(--ink-light); line-height: 1.8; }
+
+  /* ========== 表格 ========== */
+  table { width: 100%; border-collapse: collapse; z-index: 2; }
+  th, td {
+    border-bottom: 1px solid var(--line);
+    padding: 13px 14px;
+    font-size: 15.5px;
+    text-align: left;
+    letter-spacing: 1px;
+  }
+  th {
+    color: var(--seal);
+    background: rgba(158,43,37,.06);
+    letter-spacing: 3px;
+  }
+  td { color: var(--ink-light); }
+  td b { color: var(--ink); }
+
+  /* ========== 尾页 ========== */
+  .thanks { align-items: center; justify-content: center; text-align: center; }
+  .thanks h1 {
+    font-size: clamp(56px, 8vw, 110px);
+    letter-spacing: 30px;
+    color: var(--ink);
+  }
+  .thanks p {
+    margin-top: 24px;
+    font-size: 18px;
+    letter-spacing: 8px;
+    color: var(--ink-light);
+  }
+  .thanks .seal { top: auto; bottom: 6vh; right: auto; left: 50%; transform: translateX(-50%) rotate(-3deg); }
+
+  /* ========== 导航与控件 ========== */
+  #bar {
+    position: fixed;
+    left: 0; right: 0; bottom: 0;
+    height: 46px;
+    background: rgba(246,241,229,.9);
+    border-top: 1px solid var(--line);
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 0 20px;
+    z-index: 10;
+    font-size: 13px;
+    color: var(--ink-light);
+    letter-spacing: 2px;
+    backdrop-filter: blur(4px);
+  }
+  #dots { display: flex; gap: 8px; flex: 1; justify-content: center; }
+  #dots .dot {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    border: 1.5px solid var(--seal);
+    background: transparent;
+    cursor: pointer;
+    transition: all .2s;
+  }
+  #dots .dot.on { background: var(--seal); transform: scale(1.25); }
+  #ctrl { display: flex; gap: 10px; }
+  #ctrl button {
+    font-family: inherit;
+    border: 1px solid var(--seal);
+    background: rgba(158,43,37,.06);
+    color: var(--seal);
+    padding: 5px 14px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 13px;
+    letter-spacing: 2px;
+  }
+  #ctrl button:hover { background: var(--seal); color: #fff; }
+
+  .navzone {
+    position: fixed; top: 0; bottom: 46px; width: 18vw;
+    z-index: 5; cursor: pointer;
+  }
+  #prevZone { left: 0; }
+  #nextZone { right: 0; }
+
+  .pageno { position: fixed; right: 20px; bottom: 54px; z-index: 9; font-size: 12px; color: var(--gold); letter-spacing: 2px; }
+</style>
+</head>
+<body>
+
+<div id="deck">
+
+  <!-- 1 封面 -->
+  <section class="slide cover">
+    <div class="frame">
+      <div class="kicker">工作汇报 · 国风卷</div>
+      <h1>工作汇报</h1>
+      <div class="sub">汇报人：______&ensp;&ensp;部门：______&ensp;&ensp;日期：____</div>
+    </div>
+    <div class="seal">勤<br>谨</div>
+  </section>
+
+  <!-- 2 目录 -->
+  <section class="slide">
+    <div class="slide-head"><div class="num">壹</div><h2>目录</h2><div class="tail"></div></div>
+    <div class="grid">
+      <div class="card"><h3>贰 · 背景与目标</h3><p>本期工作所处背景，以及立项时确定的核心目标与范围。</p></div>
+      <div class="card"><h3>叁 · 工作进展</h3><p>按时间线梳理本期的关键节点与完成情况。</p></div>
+      <div class="card"><h3>肆 · 数据指标</h3><p>用核心数字说话：完成情况、效率与质量指标。</p></div>
+      <div class="card"><h3>伍 · 成果亮点</h3><p>本期最具代表性的成果与经验沉淀。</p></div>
+      <div class="card"><h3>陆 · 挑战与对策</h3><p>遇到的主要难题及采取的措施。</p></div>
+      <div class="card"><h3>柒 · 风险预警</h3><p>当前在途风险与应对预案。</p></div>
+      <div class="card"><h3>捌 · 下一步计划</h3><p>未来一个周期的目标、关键动作与所需支持。</p></div>
+      <div class="card"><h3>玖 · 致谢</h3><p>致谢与问答环节。</p></div>
+    </div>
+  </section>
+
+  <!-- 3 背景与目标 -->
+  <section class="slide">
+    <div class="slide-head"><div class="num">贰</div><h2>背景与目标</h2><div class="tail"></div></div>
+    <div class="grid">
+      <div class="card">
+        <h3>背景</h3>
+        <ul>
+          <li>业务处于 __ 阶段，需要 __ 来支撑增长。</li>
+          <li>上期遗留问题：__，本期重点收敛。</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>核心目标</h3>
+        <ul>
+          <li>目标一：完成 __（衡量标准：__）</li>
+          <li>目标二：将 __ 指标提升 __%</li>
+          <li>目标三：__ 能力/流程建成并投入运行</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- 4 工作进展 -->
+  <section class="slide">
+    <div class="slide-head"><div class="num">叁</div><h2>工作进展</h2><div class="tail"></div></div>
+    <div class="timeline">
+      <div class="item"><div class="t">第 1–2 周</div><h4>启动与拆解</h4><p>完成目标拆解与任务分工，明确里程碑与验收标准。</p></div>
+      <div class="item"><div class="t">第 3–6 周</div><h4>主体推进</h4><p>核心模块 __ 按期交付，联调完成度 __%。</p></div>
+      <div class="item"><div class="t">第 7–8 周</div><h4>收敛与验收</h4><p>修复遗留问题 __ 项，通过 __ 验收，正式上线/交付。</p></div>
+    </div>
+  </section>
+
+  <!-- 5 数据指标 -->
+  <section class="slide">
+    <div class="slide-head"><div class="num">肆</div><h2>数据指标</h2><div class="tail"></div></div>
+    <div class="grid">
+      <div class="card stat"><div class="val">__<small> %</small></div><div class="label">按期完成率</div></div>
+      <div class="card stat"><div class="val">__<small> 项</small></div><div class="label">交付需求 / 任务</div></div>
+      <div class="card stat"><div class="val">__<small> 个</small></div><div class="label">遗留缺陷</div></div>
+      <div class="card stat"><div class="val">__<small> 倍</small></div><div class="label">效率提升（同比）</div></div>
+    </div>
+    <p style="z-index:2; margin-top:18px; color:var(--ink-light); font-size:14px; letter-spacing:2px;">※ 将「__」替换为你的真实数字即可；数字建议控制在 4 个以内，突出最重要的。</p>
+  </section>
+
+  <!-- 6 成果亮点 -->
+  <section class="slide">
+    <div class="slide-head"><div class="num">伍</div><h2>成果亮点</h2><div class="tail"></div></div>
+    <div class="grid">
+      <div class="card"><h3>成果一</h3><p>__（做了什么 → 带来什么业务/效率收益，尽量量化）。</p></div>
+      <div class="card"><h3>成果二</h3><p>__（方法创新 / 流程优化 / 成本节约）。</p></div>
+      <div class="card"><h3>经验沉淀</h3><p>__（可复用的方法论、文档、工具，已归档于 __）。</p></div>
+    </div>
+  </section>
+
+  <!-- 7 挑战与对策 -->
+  <section class="slide">
+    <div class="slide-head"><div class="num">陆</div><h2>挑战与对策</h2><div class="tail"></div></div>
+    <table>
+      <tr><th style="width:34%">挑战</th><th style="width:33%">影响</th><th>对策与结果</th></tr>
+      <tr><td><b>资源/人力</b>：__</td><td>__</td><td>__ → 结果：__</td></tr>
+      <tr><td><b>技术/依赖</b>：__</td><td>__</td><td>__ → 结果：__</td></tr>
+      <tr><td><b>协调/沟通</b>：__</td><td>__</td><td>__ → 结果：__</td></tr>
+    </table>
+  </section>
+
+  <!-- 8 风险预警 -->
+  <section class="slide">
+    <div class="slide-head"><div class="num">柒</div><h2>风险预警</h2><div class="tail"></div></div>
+    <div class="grid">
+      <div class="card"><h3>风险一：__</h3><p>概率：__&ensp;影响：__<br>预案：__（触发条件 → 应对动作 → 责任人）。</p></div>
+      <div class="card"><h3>风险二：__</h3><p>概率：__&ensp;影响：__<br>预案：__（触发条件 → 应对动作 → 责任人）。</p></div>
+    </div>
+  </section>
+
+  <!-- 9 下一步计划 -->
+  <section class="slide">
+    <div class="slide-head"><div class="num">捌</div><h2>下一步计划</h2><div class="tail"></div></div>
+    <div class="timeline">
+      <div class="item"><div class="t">近 2 周</div><h4>__</h4><p>关键动作：__；完成标志：__。</p></div>
+      <div class="item"><div class="t">本周期内</div><h4>__</h4><p>关键动作：__；完成标志：__。</p></div>
+      <div class="item"><div class="t">需要支持</div><h4>资源 / 决策 / 协调</h4><p>请上级/相关方支持：__。</p></div>
+    </div>
+  </section>
+
+  <!-- 10 致谢 -->
+  <section class="slide thanks">
+    <h1>谢 谢</h1>
+    <p>敬请批评指正 · 恳请多提宝贵意见</p>
+    <div class="seal">敬<br>呈</div>
+  </section>
+
+</div>
+
+<!-- 导航控件 -->
+<div class="navzone" id="prevZone" title="上一页"></div>
+<div class="navzone" id="nextZone" title="下一页"></div>
+
+<div class="pageno" id="pageno">1 / 10</div>
+
+<div id="bar">
+  <div>工作汇报 · 国风</div>
+  <div id="dots"></div>
+  <div id="ctrl">
+    <button id="btnFull">全屏 (F)</button>
+    <button id="btnHome">首页</button>
+  </div>
+</div>
+
+<script>
+(function () {
+  var slides = Array.prototype.slice.call(document.querySelectorAll('.slide'));
+  var total = slides.length;
+  var cur = 0;
+
+  // 圆点
+  var dotsBox = document.getElementById('dots');
+  slides.forEach(function (_, i) {
+    var d = document.createElement('div');
+    d.className = 'dot';
+    d.title = '第 ' + (i + 1) + ' 页';
+    d.addEventListener('click', function () { go(i); });
+    dotsBox.appendChild(d);
+  });
+  var dots = Array.prototype.slice.call(dotsBox.children);
+
+  var pageno = document.getElementById('pageno');
+
+  function go(i) {
+    if (i < 0 || i >= total || i === cur) return;
+    slides[cur].classList.remove('active');
+    dots[cur].classList.remove('on');
+    cur = i;
+    slides[cur].classList.add('active');
+    dots[cur].classList.add('on');
+    pageno.textContent = (cur + 1) + ' / ' + total;
+  }
+  function next() { go(cur + 1); }
+  function prev() { go(cur - 1); }
+
+  document.getElementById('nextZone').addEventListener('click', next);
+  document.getElementById('prevZone').addEventListener('click', prev);
+
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'ArrowRight' || e.key === 'PageDown' || e.key === ' ') next();
+    else if (e.key === 'ArrowLeft' || e.key === 'PageUp') prev();
+    else if (e.key === 'Home') go(0);
+    else if (e.key === 'End') go(total - 1);
+    else if (e.key === 'f' || e.key === 'F') toggleFull();
+  });
+
+  var wheelLock = false;
+  document.addEventListener('wheel', function (e) {
+    if (wheelLock) return;
+    if (Math.abs(e.deltaY) < 24) return;
+    wheelLock = true;
+    if (e.deltaY > 0) next(); else prev();
+    setTimeout(function () { wheelLock = false; }, 420);
+  });
+
+  function toggleFull() {
+    if (document.fullscreenElement) document.exitFullscreen();
+    else document.documentElement.requestFullscreen();
+  }
+  document.getElementById('btnFull').addEventListener('click', toggleFull);
+  document.getElementById('btnHome').addEventListener('click', function () { go(0); });
+
+  // 初始化
+  slides[0].classList.add('active');
+  dots[0].classList.add('on');
+})();
+</script>
+
+</body>
+</html>
