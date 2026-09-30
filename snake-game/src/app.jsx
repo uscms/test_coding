@@ -5,7 +5,8 @@ const ROWS = 24;         // 行数
 const CELL = 20;         // 每格像素
 const TICK_MS = 110;     // 游戏帧间隔（毫秒）
 const HISTORY_LIMIT = 20; // 记录条数上限
-const STORAGE_KEY = 'snake-history'; // localStorage 键名
+const STORAGE_KEY = 'snake-history'; // 得分记录 localStorage 键名
+const THEME_KEY = 'snake-theme';     // 主题 localStorage 键名
 
 const DIR = {
   up: { x: 0, y: -1 },
@@ -49,16 +50,38 @@ function loadHistory() {
   }
 }
 
+// 读取本地主题（容错）
+function loadTheme() {
+  try {
+    return localStorage.getItem(THEME_KEY) === 'light' ? 'light' : 'dark';
+  } catch {
+    return 'dark';
+  }
+}
+
 export default function App() {
   const [snake, setSnake] = useState(initialSnake);
   const [food, setFood] = useState(() => randFood(initialSnake()));
   const [score, setScore] = useState(0);
   const [best, setBest] = useState(0);
   const [status, setStatus] = useState('ready'); // ready | playing | paused | over | win
-  const [grid, setGrid] = useState({ cols: COLS, rows: ROWS });
 
-  // 得分记录：[{ score, time(ISO 字符串) }]，最新在前
+  // 得分记录：[{ score, time(本地时间字符串) }]，最新在前
   const [history, setHistory] = useState(loadHistory);
+
+  // 实时时钟：每秒刷新
+  const [now, setNow] = useState(() => new Date());
+
+  // 深 / 浅色主题
+  const [theme, setTheme] = useState(loadTheme);
+
+  const toggleTheme = useCallback(() => {
+    setTheme((t) => (t === 'dark' ? 'light' : 'dark'));
+  }, []);
+
+  // 时钟展示字符串（等宽数字，避免跳动）
+  const timeStr = now.toLocaleTimeString('zh-CN', { hour12: false });
+  const dateStr = now.toLocaleDateString('zh-CN');
 
   // 用 ref 保存最新值，供定时器 / 键盘回调读取，避免闭包陷阱
   const snakeRef = useRef(snake);
@@ -93,6 +116,22 @@ export default function App() {
       /* 忽略隐私模式等写失败场景 */
     }
   }, [history]);
+
+  // 实时时钟：每秒刷新一次
+  useEffect(() => {
+    const t = setInterval(() => setNow(new Date()), 1000);
+    return () => clearInterval(t);
+  }, []);
+
+  // 主题应用（挂到 <html> 的 light 类上）并持久化
+  useEffect(() => {
+    document.documentElement.classList.toggle('light', theme === 'light');
+    try {
+      localStorage.setItem(THEME_KEY, theme);
+    } catch {
+      /* 忽略写失败 */
+    }
+  }, [theme]);
 
   // 一局结束（撞墙）时记录本次得分
   useEffect(() => {
@@ -192,7 +231,18 @@ export default function App() {
 
   return (
     <div className="wrap">
+      {/* 深/浅色切换：固定右上角 */}
+      <button className="theme-toggle" onClick={toggleTheme} title="切换深 / 浅色">
+        {theme === 'dark' ? '☀️ 浅色' : '🌙 深色'}
+      </button>
+
       <h1>贪吃蛇</h1>
+
+      {/* 实时时间：放在游戏名称下方 */}
+      <div className="clock">
+        {dateStr} {timeStr}
+      </div>
+
       <div className="hud">
         <div>得分 <b>{score}</b></div>
         <div>最高 <b>{best}</b></div>
