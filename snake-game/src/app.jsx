@@ -192,7 +192,7 @@ export default function App() {
 
   return (
     <div className="wrap">
-      <h1>贪吃蛇</h1>
+      <h1>我不想撞墙</h1>
       <div className="hud">
         <div>得分 <b>{score}</b></div>
         <div>最高 <b>{best}</b></div>
